@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Publicación | Blog</title>
+    <link rel="stylesheet" href="/css/edit.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="/">Inicio</a>
+            <% if (!user) { %>
+                <a href="/users/login">Iniciar sesión</a>
+                <a href="/users/register">Registrarse</a>
+            <% } else { %>
+                <span>Bienvenido, <%= user.username %>!</span>
+                <a href="/posts/create">Crear publicación</a>
+                <button onclick="logout()">Cerrar sesión</button>
+            <% } %>
+        </nav>
+    </header>
+
+    <main>
+        <h1>Editar Publicación</h1>
+        <form id="editPostForm">
+            <label for="title">Título</label>
+            <input type="text" id="title" name="title" value="<%= post.title %>" required>
+
+            <label for="content">Contenido</label>
+            <textarea id="content" name="content" required><%= post.content %></textarea>
+
+            <button type="submit">Actualizar Publicación</button>
+        </form>
+    </main>
+
+    <script>
+        document.getElementById('editPostForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const postId = "<%= post.id %>";
+            const title = document.getElementById('title').value;
+            const content = document.getElementById('content').value;
+
+            try {
+                const response = await fetch(`/posts/${postId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ title, content }),
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    window.location.href = '/';
+                } else {
+                    const errorData = await response.json();
+                    console.error('Error al actualizar la publicación:', errorData.message);
+                    alert('Error al actualizar la publicación');
+                }
+            } catch (error) {
+                console.error('Error en la solicitud de actualización:', error);
+                alert('Error en la solicitud de actualización');
+            }
+        });
+
+        async function logout() {
+            try {
+                const response = await fetch('/users/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    window.location.href = '/users/login';
+                } else {
+                    console.error('Error durante la salida:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Error al cerrar sesión:', error);
+            }
+        }
+    </script>
+</body>
+</html>

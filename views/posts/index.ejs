@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/css/postIndex.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="/">Inicio</a>
+            <% if (!user) { %>
+                <a href="/users/login">Iniciar sesión</a>
+                <a href="/users/register">Registrarse</a>
+            <% } else { %>
+                <span>Bienvenido, <%= user.username %>!</span>
+                <a href="/posts/create">Crear publicación</a>
+                <button onclick="logout()">Cerrar sesión</button>
+            <% } %>
+        </nav>
+    </header>
+
+    <main>
+        <h1><%= post.title %></h1>
+        <p><%= post.content %></p>
+    </main>
+
+    <script>
+        async function logout() {
+            try {
+                const response = await fetch('/users/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    window.location.href = '/users/login';
+                } else {
+                    console.error('Error durante la salida:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Error al cerrar sesión:', error);
+            }
+        }
+    </script>
+</body>
+</html>

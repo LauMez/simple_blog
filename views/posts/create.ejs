@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/css/create.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="/">Inicio</a>
+            <% if (!user) { %>
+                <a href="/users/login">Iniciar sesión</a>
+                <a href="/users/register">Registrarse</a>
+            <% } else { %>
+                <span>Bienvenido, <%= user.username %>!</span>
+                <a href="/posts/create">Crear publicación</a>
+                <button onclick="logout()">Cerrar sesión</button>
+            <% } %>
+        </nav>
+    </header>
+
+    <main>
+        <h1>Crear Nueva Publicación</h1>
+
+        <form id="createPostForm">
+            <div>
+                <label for="title">Título</label>
+                <input type="text" id="title" name="title" required>
+            </div>
+
+            <div>
+                <label for="content">Contenido</label>
+                <textarea id="content" name="content" rows="5" required></textarea>
+            </div>
+
+            <button type="submit">Crear publicación</button>
+        </form>
+
+        <p id="message"></p>
+    </main>
+
+    <script>
+        document.getElementById('createPostForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const title = document.getElementById('title').value;
+            const content = document.getElementById('content').value;
+
+            try {
+                const response = await fetch('/posts/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ title, content }),
+                });
+
+                const result = await response.json();
+                const messageElement = document.getElementById('message');
+                if (response.ok) {
+                    messageElement.innerText = 'Publicación creada con éxito';
+                    messageElement.style.color = 'green';
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 2000);
+                } else {
+                    messageElement.innerText = result.message;
+                    messageElement.style.color = 'red';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+
+        async function logout() {
+            try {
+                const response = await fetch('/users/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    window.location.href = '/users/login';
+                } else {
+                    console.error('Error durante la salida:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Error al cerrar sesión:', error);
+            }
+        }
+    </script>
+</body>
+</html>

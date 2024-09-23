@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio | Blog</title>
+    <link rel="stylesheet" href="/css/index.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="/">Inicio</a>
+            <% if (!user) { %>
+                <a href="/users/login">Iniciar sesión</a>
+                <a href="/users/register">Registrarse</a>
+            <% } else { %>
+                <span>Bienvenido, <%= user.username %>!</span>
+                <a href="/posts/create">Crear publicación</a>
+                <button onclick="logout()">Cerrar sesión</button>
+            <% } %>
+        </nav>
+    </header>
+
+    <main>
+        <h1>Bienvenido a Nuestro Blog</h1>
+        <p>Comparte tus pensamientos y experiencias con el mundo.</p>
+        
+        <h2>Publicaciones Recientes</h2>
+        <ul>
+            <% posts.forEach(post => { %>
+                <li>
+                    <a href="/posts/<%= post.id %>"><%= post.title %></a>
+
+                    <% if (user && user.userId === post.user_id) { %>
+                        <button onclick="editPost(<%= post.id %>)">Editar</button>
+                        <button onclick="deletePost(<%= post.id %>)">Eliminar</button>
+                    <% } %>
+
+                    <button onclick="showComments(<%= post.id %>)">Ver comentarios</button>
+                    <button onclick="addComment(<%= post.id %>)">Agregar comentario</button>
+
+                    <ul id="comments-<%= post.id %>" style="display:none;"></ul>
+                </li>
+            <% }) %>
+        </ul>
+    </main>
+
+    <script>
+        async function logout() {
+            try {
+                const response = await fetch('/users/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    window.location.href = '/users/login';
+                } else {
+                    console.error('Error durante la salida:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Error al cerrar sesión:', error);
+            }
+        }
+
+        async function deletePost(postId) {
+            try {
+                const response = await fetch(`/posts/${postId}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    alert('Publicación eliminada');
+                    window.location.reload();
+                } else {
+                    console.error('Error al eliminar la publicación:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Error al eliminar la publicación:', error);
+            }
+        }
+
+        function editPost(postId) {
+            window.location.href = `/posts/edit/${postId}`;
+        }
+
+        async function showComments(postId) {
+            const commentsList = document.getElementById(`comments-${postId}`);
+            if (commentsList.style.display === "none") {
+                try {
+                    const response = await fetch(`/comments/${postId}/comments`, {
+                        method: 'GET',
+                        credentials: 'include'
+                    });
+
+                    if (response.ok) {
+                        const comments = await response.json();
+                        commentsList.innerHTML = '';
+                        comments.forEach(comment => {
+                            const li = document.createElement('li');
+                            li.textContent = comment.content;
+                            commentsList.appendChild(li);
+                        });
+                        commentsList.style.display = "block";
+                    } else {
+                        console.error('Error al obtener comentarios:', response.statusText);
+                    }
+                } catch (error) {
+                    console.error('Error al obtener comentarios:', error);
+                }
+            } else {
+                commentsList.style.display = "none";
+            }
+        }
+
+        async function addComment(postId) {
+            const commentContent = prompt('Escribe tu comentario:');
+            if (commentContent) {
+                try {
+                    const response = await fetch(`/comments/${postId}/comments`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({ content: commentContent })
+                    });
+
+                    if (response.ok) {
+                        alert('Comentario agregado');
+                        window.location.reload();
+                    } else {
+                        console.error('Error al agregar comentario:', response.statusText);
+                    }
+                } catch (error) {
+                    console.error('Error al agregar comentario:', error);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
